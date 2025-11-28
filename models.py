@@ -1,9 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, List
 
-class SessionCreate(BaseModel):
-    variant_id: int = Field(..., ge=1, le=24, description="Номер варианта ЛР1 (1-24)", example=10)
-
 class SessionEnd(BaseModel):
     status: Literal["completed", "error"] = Field("completed", example="completed")
 
@@ -24,7 +21,6 @@ class EventLog(BaseModel):
 
 class SessionResponse(BaseModel):
     id: int = Field(..., example=42)
-    variant_id: int = Field(..., example=10)
     started_at: str = Field(..., example="2025-04-05T12:34:56.789")
     ended_at: Optional[str] = None
     status: str = Field(..., example="running")

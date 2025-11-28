@@ -24,8 +24,8 @@ async def health():
 
 # === СЕССИИ ===
 @app.post("/sessions", response_model=SessionResponse, status_code=201)
-async def create_session(payload: SessionCreate):
-    session_id = db.create_session(payload.variant_id)
+async def create_session():
+    session_id = db.create_session()
     return db.get_session(session_id)
 
 @app.get("/sessions", response_model=List[SessionResponse])
@@ -49,51 +49,51 @@ async def end_session(session_id: int, payload: SessionEnd):
     db.end_session(session_id, payload.status)
     return db.get_session(session_id)
 
-
+# Остальные эндпоинты без изменений
 @app.post("/sessions/{session_id}/sensors", status_code=201)
 async def log_sensor(session_id: int, payload: SensorReading):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     db.log_sensor(session_id, payload.sensor_type, payload.value, payload.unit)
     return {"detail": "logged"}
 
 @app.post("/sessions/{session_id}/actuators", status_code=201)
 async def log_actuator(session_id: int, payload: ActuatorCommand):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     db.log_command(session_id, payload.actuator_type, payload.command, payload.status)
     return {"detail": "logged"}
 
 @app.post("/sessions/{session_id}/events", status_code=201)
 async def log_event(session_id: int, payload: EventLog):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     db.log_event(session_id, payload.event_type, payload.severity, payload.message)
     return {"detail": "logged"}
 
 @app.get("/sessions/{session_id}/sensors/{sensor_type}/stats", response_model=SensorStatsResponse)
 async def sensor_stats(session_id: int, sensor_type: str):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     stats = db.sensor_stats(session_id, sensor_type)
-    if not stats or stats["count"] == 0:
+    if not stats:
         raise HTTPException(404, f"No data for sensor {sensor_type}")
     return stats
 
 @app.get("/sessions/{session_id}/events", response_model=List[EventResponse])
 async def get_events(session_id: int, severity: Optional[str] = None):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     return db.list_events(session_id, severity)
 
 @app.get("/sessions/{session_id}/sensors", response_model=List[SensorReadingResponse])
 async def list_sensors(session_id: int, sensor_type: Optional[str] = None):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     return db.list_sensor_readings(session_id, sensor_type)
 
 @app.get("/sessions/{session_id}/actuators", response_model=List[ActuatorCommandResponse])
 async def list_actuators(session_id: int, actuator_type: Optional[str] = None):
-    if not db.get_session(session_id): 
+    if not db.get_session(session_id):
         raise HTTPException(404, "Session not found")
     return db.list_actuator_commands(session_id, actuator_type)

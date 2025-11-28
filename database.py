@@ -22,8 +22,7 @@ class TelemetryLogger:
         cur = self._conn.cursor()
         cur.executescript("""
             CREATE TABLE IF NOT EXISTS sessions (
-              id INTEGER PRIMARY KEY,
-              variant_id INTEGER NOT NULL,
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
               started_at TEXT NOT NULL,
               ended_at TEXT,
               status TEXT NOT NULL CHECK(status IN ('running','completed','error'))
@@ -58,11 +57,11 @@ class TelemetryLogger:
         """)
         self._conn.commit()
 
-    def create_session(self, variant_id: int) -> int:
+    def create_session(self) -> int:
         ts = datetime.utcnow().isoformat()
         cur = self._conn.execute(
-            "INSERT INTO sessions(variant_id, started_at, status) VALUES (?,?,?)",
-            (variant_id, ts, "running")
+            "INSERT INTO sessions(started_at, status) VALUES (?,?)",
+            (ts, "running")
         )
         self._conn.commit()
         return cur.lastrowid
@@ -85,6 +84,7 @@ class TelemetryLogger:
         )
         self._conn.commit()
 
+    # остальные методы без изменений
     def log_sensor(self, session_id: int, sensor_type: str, value: float, unit: str = "") -> None:
         ts = datetime.utcnow().isoformat()
         self._conn.execute(
@@ -116,7 +116,7 @@ class TelemetryLogger:
             (session_id, sensor_type)
         )
         row = cur.fetchone()
-        return dict(row) if row else None
+        return dict(row) if row and row["count"] > 0 else None
 
     def list_events(self, session_id: int, severity: Optional[str] = None) -> List[Dict[str, Any]]:
         if severity:
